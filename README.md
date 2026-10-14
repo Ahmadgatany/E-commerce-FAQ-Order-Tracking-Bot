@@ -1,61 +1,114 @@
-# E-commerce FAQ & Order Tracking Bot (Phases 1–4)
+# E-commerce FAQ & Order Tracking Bot
 
-A local Rasa Open Source assistant for greetings, farewells, return-policy questions, bot identity, and order tracking. Order status comes from a small SQLite fixture. A minimal Streamlit chat UI sends messages to Rasa's REST channel.
+An e-commerce conversational assistant built with Rasa Open Source. It answers common store questions and guides shoppers through order tracking, combining intent recognition, multi-turn dialogue management, Python custom actions, and a SQLite data layer. A lightweight Streamlit interface connects to the assistant through Rasa's REST webhook.
 
-## Prerequisites and compatibility
+## Key Features
 
-- Python **3.10** recommended (Rasa Open Source 3.6.21 supports Python 3.8–3.10, not 3.11+).
-- Rasa Open Source **3.6.21** and Rasa SDK **3.6.2** are pinned in `requirements.txt`.
-- Streamlit **1.41.1** is pinned for the demo UI.
-- SQLite is included with Python. No database server, API credentials, or authentication settings are needed for local use.
+- Answers frequently asked questions, including the store's return policy.
+- Recognizes natural-language order tracking requests.
+- Extracts, validates, and normalizes order IDs.
+- Requests an order number when the shopper has not provided one and continues the tracking flow when it arrives.
+- Uses Rasa custom actions and a separate SQLite repository for order lookups.
+- Responds safely to malformed or unknown IDs and database errors.
+- Provides a Streamlit chat interface with message history and REST connection error handling.
+- Includes automated unit tests for action behavior, SQLite repository lookups, and REST client errors.
+- Separates conversation configuration, action logic, data access, and the chat interface into focused files.
 
-Create a virtual environment from the project directory. In PowerShell:
+## Why Rasa?
+
+Rasa provides practical building blocks for this assistant: intent classification and entity extraction to interpret messages; a domain to define intents, entities, slots, responses, and actions; and rule-based and story-based policies to represent multi-turn conversations. Custom actions connect those conversations to Python logic and the SQLite repository. The REST channel lets an external interface such as Streamlit exchange messages with the assistant.
+
+The project uses Rasa's local pipeline and dialogue components as a small, extendable implementation. The current NLU data and fallback behavior are intentionally basic and are not presented as production-grade language understanding.
+
+## Tech Stack
+
+| Technology | Use |
+| --- | --- |
+| Python | Custom actions, repository, and demo client |
+| Rasa Open Source 3.6.21 | NLU and dialogue management |
+| Rasa SDK 3.6.2 | Custom action server |
+| SQLite | Fictional local order records |
+| Streamlit | Browser-based chat interface |
+| Rasa REST API | Message transport between Streamlit and Rasa |
+| `unittest` | Unit and client behavior tests |
+
+## Architecture
+
+```mermaid
+flowchart LR
+    User --> UI[Streamlit Chat UI]
+    UI -->|User message| REST[Rasa REST Webhook]
+    REST --> NLU[NLU and Dialogue Management]
+    NLU -->|action_track_order| Actions[Custom Action Server]
+    Actions --> Repo[OrderRepository]
+    Repo --> DB[(SQLite Orders)]
+    DB --> Repo
+    Repo --> Actions
+    Actions --> NLU
+    NLU -->|Bot response| REST
+    REST -->|Bot response| UI
+    UI --> User
+```
+
+## Example Conversation
+
+The order below is fictional sample data from the local SQLite database.
+
+```text
+User: Hi!
+Assistant: Hello! How can I help you with your order or a store question today?
+
+User: Can you track my order?
+Assistant: Sure, I can check that. What is your order number?
+
+User: ORD-10482
+Assistant: Order ORD-10482 is shipped. Estimated delivery: 2026-10-16.
+```
+
+## Installation and Local Setup
+
+Rasa Open Source 3.6.21 is pinned in `requirements.txt`. Use Python 3.10 for this setup.
+
+### 1. Create the environment and install dependencies
+
+In PowerShell, from the project directory:
 
 ```powershell
-py -3.10 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
+conda create -n rasa310 python=3.10.13 -y
+conda activate rasa310
 python -m pip install -r requirements.txt
 ```
 
-On macOS/Linux, use `python3.10 -m venv .venv` and `source .venv/bin/activate`.
-
-## Initialize the database
-
-The initializer creates 15 fictional orders in `data/orders.sqlite3` and is safe to rerun:
+### 2. Initialize the fictional order database
 
 ```powershell
 python scripts/init_db.py
 ```
 
-The action server reads `ORDER_DB_PATH`; the default is `data/orders.sqlite3`, relative to the project directory. To use another file, set the same path in the terminals that run the initializer and action server:
+This creates 15 sample orders in `data/orders.sqlite3`. The initializer can be rerun to initialize the schema and refresh the sample records. To use a different SQLite file, set the same `ORDER_DB_PATH` environment variable in the initializer and action server terminals. The default is `data/orders.sqlite3`, relative to the project directory.
 
 ```powershell
 $env:ORDER_DB_PATH = "data/local-orders.sqlite3"
 python scripts/init_db.py
 ```
 
-The `.gitignore` excludes local SQLite files; initialize a fresh local fixture after checkout.
-
-## Validate, test, and train
+### 3. Validate, test, and train
 
 ```powershell
-python -m unittest discover -s tests -v
 rasa data validate
+python -m unittest discover -s tests -v
 rasa train
 ```
 
-Run the Rasa Open Source dialogue conversation tests after training:
+To evaluate the dialogue model against the Rasa conversation test stories after training:
 
 ```powershell
 rasa test core --stories tests/test_conversations.yml --out results
 ```
 
-These test stories cover greetings, return policy, tracking with and without an ID, invalid-ID retry, and fallback. Rasa Open Source story tests verify predicted dialogue actions; custom actions are not executed by that test command. The unit tests separately exercise the action and real SQLite repository using temporary databases.
+### 4. Start the local services
 
-## Start all three local processes
-
-Use three terminals, all opened in the project directory with `.venv` activated. If you chose a custom database path, set `ORDER_DB_PATH` in the initializer/action terminal. No credentials are needed for Rasa's REST input channel; `credentials.yml` enables the `rest:` channel.
+Open three PowerShell terminals in the project directory and activate the `rasa310` environment in each. If you configured a non-default `ORDER_DB_PATH`, set it in the action-server terminal as well.
 
 **Terminal 1 — custom action server:**
 
@@ -69,30 +122,46 @@ rasa run actions
 rasa run --enable-api --credentials credentials.yml --endpoints endpoints.yml --port 5005
 ```
 
-**Terminal 3 — Streamlit chat UI:**
+`credentials.yml` enables the `rest:` input channel and contains no credentials. The Streamlit client calls `http://localhost:5005/webhooks/rest/webhook`. Set `RASA_REST_URL` if the Rasa server uses another base URL or webhook URL.
+
+**Terminal 3 — Streamlit interface:**
 
 ```powershell
 streamlit run streamlit_app.py
 ```
 
-The browser UI sends messages to `http://localhost:5005/webhooks/rest/webhook`. Set `RASA_REST_URL` if Rasa listens at a different base URL or webhook endpoint. The UI retains a per-browser message history and displays friendly messages when Rasa is unreachable or returns a server error.
+Open the local URL printed by Streamlit, usually **http://localhost:8501**.
 
-For an interactive terminal chat instead of Streamlit, stop the Rasa server and run `rasa shell --endpoints endpoints.yml` while Terminal 1 remains active.
+## Testing
 
-## Project structure
+Run the unit suite with:
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+The action tests verify valid and invalid order IDs, known and unknown orders, missing slot values, and database error handling. Repository tests use isolated temporary SQLite databases. REST client tests cover successful replies, connection failures, HTTP errors, and malformed responses. `tests/test_conversations.yml` defines Rasa dialogue scenarios for greetings, return-policy questions, order tracking with and without an ID, invalid-ID retry, and fallback.
+
+## Project Structure
 
 ```text
 .
-├── actions.py                  # Form validation and tracking action
-├── order_repository.py         # Parameterized SQLite lookup
-├── streamlit_app.py            # Minimal chat UI
-├── rasa_rest_client.py         # REST transport and error handling
-├── credentials.yml             # REST channel (no secrets)
-├── endpoints.yml               # Custom action endpoint
-├── config.yml / domain.yml     # NLU pipeline, policies, intents, slots, responses
-├── data/                       # NLU, stories, rules, and local database
-├── scripts/init_db.py          # Recreates the fictional SQLite fixture
-└── tests/                      # Unit tests and Rasa conversation test stories
+├── actions.py                 # Form validation and order tracking action
+├── order_repository.py        # SQLite data access
+├── streamlit_app.py           # Chat interface
+├── rasa_rest_client.py        # REST webhook client
+├── config.yml, domain.yml     # NLU pipeline, policies, intents, slots, responses
+├── credentials.yml            # REST channel configuration
+├── endpoints.yml              # Custom action endpoint
+├── data/                      # NLU examples, stories, rules, local database
+├── scripts/init_db.py         # Creates and seeds fictional orders
+└── tests/                     # Unit tests and Rasa conversation scenarios
 ```
 
-The sample data is fictional and intended only for local development. This project has no production order-service integration, authentication, or remote deployment.
+## Limitations and Future Improvements
+
+- The SQLite orders and delivery estimates are fictional demo data.
+- There is no connection to a real e-commerce platform, order service, or shipping provider.
+- The project is configured for local development and is not a deployed production service.
+- The NLU examples and out-of-scope fallback behavior are limited; they could be expanded and evaluated with broader user language and test data.
+- Future work could connect a real order service, improve fallback and recovery for out-of-scope requests, expand NLU testing, and prepare a deployment appropriate to the target environment.
