@@ -1,0 +1,50 @@
+version: "3.1"
+
+rules:
+  - rule: Respond to a greeting
+    steps:
+      - intent: greet
+      - action: utter_greet
+
+  - rule: Respond to a goodbye
+    steps:
+      - intent: goodbye
+      - action: utter_goodbye
+
+  - rule: Answer return policy questions
+    steps:
+      - intent: ask_return_policy
+      - action: utter_ask_return_policy
+
+  - rule: Start order tracking form
+    steps:
+      - intent: track_order
+      - action: track_order_form
+      - active_loop: track_order_form
+
+  - rule: Submit order tracking form
+    condition:
+      - active_loop: track_order_form
+    steps:
+      - action: track_order_form
+      - active_loop: null
+      - action: action_track_order
+
+  - rule: Identify the bot
+    steps:
+      - intent: bot_challenge
+      - action: utter_bot_challenge
+
+  - rule: Handle low-confidence user messages
+    steps:
+      - intent: nlu_fallback
+      - action: utter_fallback
+
+  - rule: Stop tracking when the user says goodbye
+    condition:
+      - active_loop: track_order_form
+    steps:
+      - intent: goodbye
+      - action: utter_goodbye
+      - action: action_deactivate_loop
+      - active_loop: null

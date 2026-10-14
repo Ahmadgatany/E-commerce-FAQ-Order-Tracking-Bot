@@ -1,0 +1,79 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - track_order
+  - ask_return_policy
+  - bot_challenge
+  - nlu_fallback
+
+entities:
+  - order_id
+
+slots:
+  order_id:
+    type: text
+    influence_conversation: false
+    mappings:
+      - type: from_entity
+        entity: order_id
+        intent: track_order
+      - type: from_entity
+        entity: order_id
+        conditions:
+          - active_loop: track_order_form
+            requested_slot: order_id
+      - type: from_text
+        conditions:
+          - active_loop: track_order_form
+            requested_slot: order_id
+
+forms:
+  track_order_form:
+    required_slots:
+      - order_id
+
+actions:
+  - validate_track_order_form
+  - action_track_order
+
+responses:
+  utter_greet:
+    - text: "Hello! How can I help you with your order or a store question today?"
+    - text: "Hi there! I can help with our return policy or get you started with an order enquiry."
+
+  utter_goodbye:
+    - text: "Goodbye! Thanks for stopping by."
+    - text: "Take care, and feel free to come back if you need help."
+
+  utter_ask_order_id:
+    - text: "Sure, I can check that. What is your order number?"
+
+  utter_invalid_order_id:
+    - text: "That order number doesn't look right. Please enter 5 to 20 letters or numbers, optionally separated by hyphens or starting with #."
+
+  utter_order_not_found:
+    - text: "I couldn't find that order. Please check the number or contact store support."
+
+  utter_missing_order_id:
+    - text: "I need an order number before I can look it up. Please start tracking again and provide your order number."
+
+  utter_order_database_error:
+    - text: "I'm unable to access order tracking right now. Please try again later or contact store support."
+
+  utter_order_lookup_error:
+    - text: "I couldn't complete that order lookup. Please try again later or contact store support."
+
+  utter_ask_return_policy:
+    - text: "Most unused items can be returned within 30 days of delivery, with proof of purchase. Some exclusions may apply; please check the product listing or contact our support team for help."
+
+  utter_bot_challenge:
+    - text: "I'm the store's virtual assistant. I can answer basic questions and help with order enquiries."
+
+  utter_fallback:
+    - text: "Sorry, I didn't understand that. You can ask about returns or say 'track my order' to begin tracking."
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true

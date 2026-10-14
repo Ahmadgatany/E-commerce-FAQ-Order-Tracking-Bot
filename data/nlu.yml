@@ -1,0 +1,63 @@
+version: "3.1"
+
+nlu:
+  - intent: greet
+    examples: |
+      - Hi
+      - Hello!
+      - Hey there
+      - Good morning
+      - Good afternoon
+      - Hi, can you help me?
+      - Hello, I have a question
+      - Hey, anyone there?
+
+  - intent: goodbye
+    examples: |
+      - Bye
+      - Goodbye
+      - See you later
+      - That's all, thanks
+      - Thanks, have a good day
+      - I have to go now
+      - Talk to you later
+      - Bye for now
+
+  - intent: track_order
+    examples: |
+      - Where is my order?
+      - Can you track my package?
+      - I want to check the status of my order
+      - Has my purchase shipped yet?
+      - Please help me find my delivery
+      - Track order [ORD-10482](order_id)
+      - Can you check order number [A739205](order_id)?
+      - I need an update on [#582914](order_id)
+      - What's happening with my package [EC-44190](order_id)?
+      - My order ID is [ORD-77821](order_id), can you look it up?
+      - When will order [B120045](order_id) arrive?
+      - I haven't received order [#901267](order_id)
+
+  - intent: ask_return_policy
+    examples: |
+      - What is your return policy?
+      - Can I return something I bought?
+      - How long do I have to send an item back?
+      - Do you accept returns?
+      - I received the wrong size, can I exchange it?
+      - Are sale items eligible for a return?
+      - How do I request a refund?
+      - Can I return an unused product?
+      - What are the rules for returning an order?
+      - Is there a time limit for returns?
+
+  - intent: bot_challenge
+    examples: |
+      - Are you a real person?
+      - Am I chatting with a bot?
+      - Are you human or automated?
+      - Who am I speaking to?
+      - What are you?
+      - Is this an AI assistant?
+      - Are you a customer service agent?
+      - Can I talk to a real person?

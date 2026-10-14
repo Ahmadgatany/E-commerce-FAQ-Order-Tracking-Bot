@@ -1,0 +1,73 @@
+version: "3.1"
+
+stories:
+  - story: greet the shopper
+    steps:
+      - user: "Hello!"
+        intent: greet
+      - action: utter_greet
+
+  - story: answer a return policy question
+    steps:
+      - user: "What is your return policy?"
+        intent: ask_return_policy
+      - action: utter_ask_return_policy
+
+  - story: track a known order
+    steps:
+      - user: "Track order ORD-10482"
+        intent: track_order
+        entities:
+          - entity: order_id
+            value: ORD-10482
+      - slot_was_set:
+          - order_id: ORD-10482
+      - action: track_order_form
+      - active_loop: track_order_form
+      - action: track_order_form
+      - active_loop: null
+      - action: action_track_order
+
+  - story: ask for the order number before tracking
+    steps:
+      - user: "Where is my order?"
+        intent: track_order
+      - action: track_order_form
+      - active_loop: track_order_form
+      - slot_was_set:
+          - requested_slot: order_id
+      - user: "ORD-10482"
+        intent: nlu_fallback
+      - slot_was_set:
+          - order_id: ORD-10482
+      - action: track_order_form
+      - active_loop: null
+      - action: action_track_order
+
+  - story: reject an invalid order ID and ask again
+    steps:
+      - user: "Track my order"
+        intent: track_order
+      - action: track_order_form
+      - active_loop: track_order_form
+      - slot_was_set:
+          - requested_slot: order_id
+      - user: "!!"
+        intent: nlu_fallback
+      - slot_was_set:
+          - order_id: null
+      - slot_was_set:
+          - requested_slot: order_id
+      - user: "ORD-10482"
+        intent: nlu_fallback
+      - slot_was_set:
+          - order_id: ORD-10482
+      - action: track_order_form
+      - active_loop: null
+      - action: action_track_order
+
+  - story: respond when the user message falls back
+    steps:
+      - user: "blorpt zindle"
+        intent: nlu_fallback
+      - action: utter_fallback

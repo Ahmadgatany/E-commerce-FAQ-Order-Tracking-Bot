@@ -1,0 +1,44 @@
+version: "3.1"
+
+stories:
+  - story: greet and ask about returns
+    steps:
+      - intent: greet
+      - action: utter_greet
+      - intent: ask_return_policy
+      - action: utter_ask_return_policy
+
+  - story: track a known order number
+    steps:
+      - intent: track_order
+      - slot_was_set:
+          - order_id: ORD-10482
+      - action: track_order_form
+      - active_loop: track_order_form
+      - action: track_order_form
+      - active_loop: null
+      - action: action_track_order
+
+  - story: ask for a missing order number and then track it
+    steps:
+      - intent: track_order
+      - action: track_order_form
+      - active_loop: track_order_form
+      - slot_was_set:
+          - requested_slot: order_id
+      - user: "ORD-10482"
+      - slot_was_set:
+          - order_id: ORD-10482
+      - action: track_order_form
+      - active_loop: null
+      - action: action_track_order
+
+  - story: cancel order tracking
+    steps:
+      - intent: track_order
+      - action: track_order_form
+      - active_loop: track_order_form
+      - intent: goodbye
+      - action: utter_goodbye
+      - action: action_deactivate_loop
+      - active_loop: null
