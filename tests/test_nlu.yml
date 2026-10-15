@@ -1,0 +1,29 @@
+version: "3.1"
+
+nlu:
+  - intent: out_of_scope
+    examples: |
+      - What is the capital of France?
+      - Tell me a joke
+      - Book me a flight to Cairo
+
+  - intent: greet
+    examples: |
+      - Hello!
+
+  - intent: goodbye
+    examples: |
+      - See you later
+
+  - intent: ask_return_policy
+    examples: |
+      - What is your return policy?
+
+  - intent: track_order
+    examples: |
+      - Where is my order?
+      - Track order [ORD-10482](order_id)
+
+  - intent: bot_challenge
+    examples: |
+      - Are you a real person?

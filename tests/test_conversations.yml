@@ -28,6 +28,21 @@ stories:
       - active_loop: null
       - action: action_track_order
 
+  - story: report an order that is not in the database
+    steps:
+      - user: "Track order ORD-55555"
+        intent: track_order
+        entities:
+          - entity: order_id
+            value: ORD-55555
+      - slot_was_set:
+          - order_id: ORD-55555
+      - action: track_order_form
+      - active_loop: track_order_form
+      - action: track_order_form
+      - active_loop: null
+      - action: action_track_order
+
   - story: ask for the order number before tracking
     steps:
       - user: "Where is my order?"
@@ -69,5 +84,29 @@ stories:
   - story: respond when the user message falls back
     steps:
       - user: "blorpt zindle"
+        intent: nlu_fallback
+      - action: utter_fallback
+
+  - story: reply to an unrelated question
+    steps:
+      - user: "What is the capital of France?"
+        intent: out_of_scope
+      - action: utter_out_of_scope
+
+  - story: reply to an unsupported request
+    steps:
+      - user: "Can you book me a flight to Cairo?"
+        intent: out_of_scope
+      - action: utter_out_of_scope
+
+  - story: guide an ambiguous request
+    steps:
+      - user: "Can you help me with something unusual?"
+        intent: nlu_fallback
+      - action: utter_fallback
+
+  - story: clarify a generic request
+    steps:
+      - user: "Can you help me?"
         intent: nlu_fallback
       - action: utter_fallback

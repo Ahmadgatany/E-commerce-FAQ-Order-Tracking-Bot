@@ -61,3 +61,21 @@ nlu:
       - Is this an AI assistant?
       - Are you a customer service agent?
       - Can I talk to a real person?
+
+  - intent: out_of_scope
+    examples: |
+      - What is the capital of France?
+      - Tell me a joke
+      - Write a poem about the ocean
+      - Can you solve this algebra problem?
+      - Who won the football match yesterday?
+      - What is the weather like tomorrow?
+      - Help me install a printer
+      - Book me a flight to Cairo
+      - Can you recommend a movie?
+      - I need medical advice
+      - What is your phone number?
+      - Change the email address on my account
+      - Cancel my subscription
+      - I want to speak to a human agent
+      - How do I reset my bank password?

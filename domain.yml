@@ -6,6 +6,7 @@ intents:
   - track_order
   - ask_return_policy
   - bot_challenge
+  - out_of_scope
   - nlu_fallback
 
 entities:
@@ -72,7 +73,10 @@ responses:
     - text: "I'm the store's virtual assistant. I can answer basic questions and help with order enquiries."
 
   utter_fallback:
-    - text: "Sorry, I didn't understand that. You can ask about returns or say 'track my order' to begin tracking."
+    - text: "I can help with returns or order tracking. What would you like to know?"
+
+  utter_out_of_scope:
+    - text: "I can help with returns or order tracking. What would you like to know?"
 
 session_config:
   session_expiration_time: 60

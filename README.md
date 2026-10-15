@@ -10,6 +10,7 @@ An e-commerce conversational assistant built with Rasa Open Source. It answers c
 - Requests an order number when the shopper has not provided one and continues the tracking flow when it arrives.
 - Uses Rasa custom actions and a separate SQLite repository for order lookups.
 - Responds safely to malformed or unknown IDs and database errors.
+- Routes recognized unrelated requests to a concise out-of-scope reply and uses Rasa's NLU fallback for low-confidence or ambiguous predictions.
 - Provides a Streamlit chat interface with message history and REST connection error handling.
 - Includes automated unit tests for action behavior, SQLite repository lookups, and REST client errors.
 - Separates conversation configuration, action logic, data access, and the chat interface into focused files.
@@ -18,7 +19,7 @@ An e-commerce conversational assistant built with Rasa Open Source. It answers c
 
 Rasa provides practical building blocks for this assistant: intent classification and entity extraction to interpret messages; a domain to define intents, entities, slots, responses, and actions; and rule-based and story-based policies to represent multi-turn conversations. Custom actions connect those conversations to Python logic and the SQLite repository. The REST channel lets an external interface such as Streamlit exchange messages with the assistant.
 
-The project uses Rasa's local pipeline and dialogue components as a small, extendable implementation. The current NLU data and fallback behavior are intentionally basic and are not presented as production-grade language understanding.
+The project uses Rasa's local pipeline and dialogue components as a small, extendable implementation. The NLU pipeline includes Rasa 3.6's `FallbackClassifier` with a 0.99 confidence threshold and 0.1 ambiguity threshold. The high threshold is deliberate: this small DIET model can assign high confidence to unrelated text. Messages classified as `out_of_scope` receive a short reply that points back to returns and order tracking; low-confidence or ambiguous predictions receive the same guidance through `nlu_fallback`. These behaviors depend on the trained model and the coverage of its examples; they do not guarantee correct classification for every message.
 
 ## Tech Stack
 
@@ -134,13 +135,14 @@ Open the local URL printed by Streamlit, usually **http://localhost:8501**.
 
 ## Testing
 
-Run the unit suite with:
+Run the unit suite and Rasa data validation with:
 
 ```powershell
 python -m unittest discover -s tests -v
+rasa data validate
 ```
 
-The action tests verify valid and invalid order IDs, known and unknown orders, missing slot values, and database error handling. Repository tests use isolated temporary SQLite databases. REST client tests cover successful replies, connection failures, HTTP errors, and malformed responses. `tests/test_conversations.yml` defines Rasa dialogue scenarios for greetings, return-policy questions, order tracking with and without an ID, invalid-ID retry, and fallback.
+The action tests verify valid and invalid order IDs, known and unknown orders, missing slot values, and safe database error handling. Repository tests use isolated temporary SQLite databases. REST client tests cover successful replies, connection failures, HTTP errors, and malformed responses. `tests/test_nlu.yml` evaluates unrelated text and each supported intent against the trained model. `tests/test_rasa_model.py` loads the latest trained model and checks the exact unusual-help regression through NLU parsing and the full Rasa Agent response path, plus unrelated questions and supported intent responses. `tests/test_conversations.yml` defines additional dialogue scenarios for order tracking, including missing and unknown order IDs. After training, run `python -m unittest discover -s tests -v`, `rasa test nlu --nlu tests/test_nlu.yml`, and `rasa test core --stories tests/test_conversations.yml`. A confidence threshold cannot guarantee correct intent classification for every possible message; these tests cover representative cases, not all user language.
 
 ## Project Structure
 
@@ -163,5 +165,5 @@ The action tests verify valid and invalid order IDs, known and unknown orders, m
 - The SQLite orders and delivery estimates are fictional demo data.
 - There is no connection to a real e-commerce platform, order service, or shipping provider.
 - The project is configured for local development and is not a deployed production service.
-- The NLU examples and out-of-scope fallback behavior are limited; they could be expanded and evaluated with broader user language and test data.
-- Future work could connect a real order service, improve fallback and recovery for out-of-scope requests, expand NLU testing, and prepare a deployment appropriate to the target environment.
+- The NLU examples and fallback behavior have limited coverage; broader labeled data and evaluation are needed to understand classification quality across user language.
+- Future work could connect a real order service, broaden fallback examples and evaluation, and prepare a deployment appropriate to the target environment.

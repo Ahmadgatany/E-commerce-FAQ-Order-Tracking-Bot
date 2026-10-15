@@ -35,10 +35,23 @@ rules:
       - intent: bot_challenge
       - action: utter_bot_challenge
 
+  - rule: Keep order tracking active for uncertain order IDs
+    condition:
+      - active_loop: track_order_form
+    steps:
+      - intent: nlu_fallback
+      - action: track_order_form
+      - active_loop: track_order_form
+
   - rule: Handle low-confidence user messages
     steps:
       - intent: nlu_fallback
       - action: utter_fallback
+
+  - rule: Handle unrelated requests
+    steps:
+      - intent: out_of_scope
+      - action: utter_out_of_scope
 
   - rule: Stop tracking when the user says goodbye
     condition:
